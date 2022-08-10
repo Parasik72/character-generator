@@ -1,0 +1,6 @@
+/node_modules
+/prisma/PostgreSQL/generated
+/prisma/MongoDB/generated
+/static
+.env
+.env.docker

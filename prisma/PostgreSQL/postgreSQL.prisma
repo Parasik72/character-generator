@@ -1,0 +1,180 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "./generated/client"
+  binaryTargets = ["native", "windows", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRESQL_URL")
+}
+
+model Role {
+  id    String @id
+  name  String
+  users User[]
+}
+
+model User {
+  id              String             @id
+  email           String             @unique
+  avatar          String?
+  description     String?
+  password        String
+  phoneNumber     String?
+  role            Role?              @relation(fields: [roleId], references: [id])
+  roleId          String?
+  createdAt       DateTime           @default(now())
+  activationLink  Activationlink?
+  token           Token?
+  characteristics Characteristic[]
+  ammunition      AmmunitionOnUser[]
+  skills          SkillOnUsers[]
+}
+
+model Activationlink {
+  user        User?   @relation(fields: [userId], references: [id])
+  userId      String? @unique
+  link        String  @id
+  phoneCode   Int?
+  isActivated Boolean @default(false)
+}
+
+model Token {
+  user              User?    @relation(fields: [userId], references: [id])
+  userId            String?  @unique
+  accessToken       String   @id
+  isActive          Boolean
+  lastAuthorization DateTime @default(now())
+}
+
+model Characteristic {
+  id                   String              @id
+  value                Int
+  user                 User?               @relation(fields: [userId], references: [id])
+  userId               String?
+  characteristicType   CharacteristicType? @relation(fields: [characteristicTypeId], references: [id])
+  characteristicTypeId String?
+}
+
+model CharacteristicType {
+  id              String                        @id
+  name            String                        @unique
+  characteristics Characteristic[]
+  stats           CharacteristicTypeOnStat[]
+  skills          SkillOnCharacteristics[]
+  ammunition      AmmunitionOnCharacteristics[]
+}
+
+model Stat {
+  id                  String                     @id
+  name                String                     @unique
+  characteristicTypes CharacteristicTypeOnStat[]
+  ammunition          AmmunitionOnStats[]
+  skills              SkillOnStats[]
+}
+
+model CharacteristicTypeOnStat {
+  characteristicType   CharacteristicType? @relation(fields: [characteristicTypeId], references: [id])
+  characteristicTypeId String
+  stat                 Stat?               @relation(fields: [statId], references: [id])
+  statId               String
+  eachDivider          Int
+  eachUp               Int
+
+  @@id([characteristicTypeId, statId])
+}
+
+model Skill {
+  id              String                   @id
+  name            String                   @unique
+  ammunition      AmmunitionOnSkills[]
+  stats           SkillOnStats[]
+  characteristics SkillOnCharacteristics[]
+  users           SkillOnUsers[]
+}
+
+model SkillOnStats {
+  stat    Stat?  @relation(fields: [statId], references: [id])
+  statId  String
+  skill   Skill? @relation(fields: [skillId], references: [id])
+  skillId String
+  upValue Int
+
+  @@id([statId, skillId])
+}
+
+model SkillOnCharacteristics {
+  characteristicType   CharacteristicType? @relation(fields: [characteristicTypeId], references: [id])
+  characteristicTypeId String
+  skill                Skill?              @relation(fields: [skillId], references: [id])
+  skillId              String
+  upValue              Int
+
+  @@id([characteristicTypeId, skillId])
+}
+
+model SkillOnUsers {
+  user    User?  @relation(fields: [userId], references: [id])
+  userId  String
+  skill   Skill? @relation(fields: [skillId], references: [id])
+  skillId String
+
+  @@id([userId, skillId])
+}
+
+model Ammunition {
+  id               String                        @id
+  name             String                        @unique
+  picture          String?
+  users            AmmunitionOnUser[]
+  ammunitionType   AmmunitionType?               @relation(fields: [ammunitionTypeId], references: [id])
+  ammunitionTypeId String?
+  characteristics  AmmunitionOnCharacteristics[]
+  stats            AmmunitionOnStats[]
+  skills           AmmunitionOnSkills[]
+}
+
+model AmmunitionType {
+  id          String       @id
+  type        String       @unique
+  ammunitions Ammunition[]
+}
+
+model AmmunitionOnUser {
+  user         User?       @relation(fields: [userId], references: [id])
+  userId       String
+  ammunition   Ammunition? @relation(fields: [ammunitionId], references: [id])
+  ammunitionId String
+
+  @@id([userId, ammunitionId])
+}
+
+model AmmunitionOnCharacteristics {
+  characteristicType   CharacteristicType? @relation(fields: [characteristicTypeId], references: [id])
+  characteristicTypeId String
+  ammunition           Ammunition?         @relation(fields: [ammunitionId], references: [id])
+  ammunitionId         String
+  upValue              Int
+
+  @@id([characteristicTypeId, ammunitionId])
+}
+
+model AmmunitionOnStats {
+  stat         Stat?       @relation(fields: [statId], references: [id])
+  statId       String
+  ammunition   Ammunition? @relation(fields: [ammunitionId], references: [id])
+  ammunitionId String
+  upValue      Int
+
+  @@id([statId, ammunitionId])
+}
+
+model AmmunitionOnSkills {
+  skill        Skill?      @relation(fields: [skillId], references: [id])
+  skillId      String
+  ammunition   Ammunition? @relation(fields: [ammunitionId], references: [id])
+  ammunitionId String
+
+  @@id([skillId, ammunitionId])
+}
